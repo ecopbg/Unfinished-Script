@@ -141,9 +141,10 @@ local function launchPlayer()
     bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
     bodyVelocity.Parent = humanoidRootPart
 
-    -- Backflip (Rotation based on power)
-    local backflipSpin = launchPower / 10  -- Faster spin with more power
-    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(math.rad(backflipSpin), 0, 0)
+    -- Backflip (Vertical Spin based on power)
+    local backflipSpinSpeed = launchPower / 5  -- Faster spin with more power
+    local backflipCFrame = humanoidRootPart.CFrame * CFrame.Angles(math.rad(backflipSpinSpeed), 0, 0)
+    humanoidRootPart.CFrame = backflipCFrame
 
     game:GetService("Debris"):AddItem(bodyVelocity, 1)
 end
