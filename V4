@@ -1,6 +1,5 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -27,24 +26,24 @@ screenGui.ResetOnSpawn = false -- Persist after death
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 200)
+frame.Size = UDim2.new(0, 250, 0, 180)
 frame.Position = guiPosition
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-frame.BorderSizePixel = 5
-frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BorderSizePixel = 4
+frame.BorderColor3 = Color3.fromRGB(255, 0, 0)  -- Red border
 frame.Draggable = true
 frame.Active = true
 frame.Parent = screenGui
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
-title.BackgroundTransparency = 1
+title.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 title.Text = "fUNny lAunch gUI!1!!1"
 title.TextScaled = true
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.Cartoon
-title.TextOutlineTransparency = 0.7
-title.TextStrokeTransparency = 0.2
+title.TextStrokeTransparency = 0.5
+title.TextOutlineTransparency = 0.5
 title.Parent = frame
 
 -- Small Credit Text
@@ -60,8 +59,8 @@ creditText.Parent = frame
 
 -- Close Button
 local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 30, 0, 30)
-closeButton.Position = UDim2.new(0, 0, 0, 0)
+closeButton.Size = UDim2.new(0, 25, 0, 25)
+closeButton.Position = UDim2.new(0, 0, 0, 0) -- Position on top-left
 closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 closeButton.Text = "X"
 closeButton.TextScaled = true
@@ -73,7 +72,7 @@ closeButton.Parent = frame
 local reopenButton = Instance.new("TextButton")
 reopenButton.Size = UDim2.new(0, 100, 0, 30)
 reopenButton.Position = UDim2.new(0, 10, 0, 10)
-reopenButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+reopenButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
 reopenButton.Text = "Reopen"
 reopenButton.TextScaled = true
 reopenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -84,22 +83,24 @@ reopenButton.Visible = false
 -- Button Creation Function
 local function createButton(text, posY)
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0.9, 0, 0, 30)
+    button.Size = UDim2.new(0.9, 0, 0, 25)
     button.Position = UDim2.new(0.05, 0, 0, posY)
     button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Text = text
     button.Font = Enum.Font.Cartoon
     button.TextScaled = true
+    button.BorderSizePixel = 2
+    button.BorderColor3 = Color3.fromRGB(255, 0, 0)  -- Red border
     button.Parent = frame
     return button
 end
 
 -- Create Buttons
 local launchButton = createButton("Launch", 50)
-local unstunButton = createButton("Unstun", 90)
-local directionButton = createButton("Direction: Forward", 130)
-local powerButton = createButton("Power: 100", 170)
+local unstunButton = createButton("Unstun", 80)
+local directionButton = createButton("Direction: Forward", 110)
+local powerButton = createButton("Power: 100", 140)
 
 -- Power Input Box (Hidden Initially)
 local powerInput = Instance.new("TextBox")
@@ -113,19 +114,33 @@ powerInput.TextScaled = true
 powerInput.Visible = false
 powerInput.Parent = frame
 
+-- Rainbow Color Function
+local function changeTitleColor()
+    while true do
+        for i = 0, 255, 10 do
+            title.TextColor3 = Color3.fromHSV(i/255, 1, 1)
+            wait(0.05)
+        end
+    end
+end
+coroutine.wrap(changeTitleColor)()
+
 -- Launch Function
 local function launchPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Paralyze player
 
-    local directionVector = Vector3.new(0, 60, 0) -- Default (upwards)
+    -- Bounce Effect Calculation
+    local verticalLaunchHeight = math.clamp(launchPower / 12, 10, 40)  -- Calculate height between 10-40 studs
+    local directionVector = Vector3.new(0, verticalLaunchHeight, 0)
+
     if launchDirections[currentDirectionIndex] == "Forward" then
-        directionVector = Vector3.new(0, 50, -launchPower)
+        directionVector = Vector3.new(0, verticalLaunchHeight, -launchPower)
     elseif launchDirections[currentDirectionIndex] == "Backward" then
-        directionVector = Vector3.new(0, 50, launchPower)
+        directionVector = Vector3.new(0, verticalLaunchHeight, launchPower)
     elseif launchDirections[currentDirectionIndex] == "Left" then
-        directionVector = Vector3.new(-launchPower, 50, 0)
+        directionVector = Vector3.new(-launchPower, verticalLaunchHeight, 0)
     elseif launchDirections[currentDirectionIndex] == "Right" then
-        directionVector = Vector3.new(launchPower, 50, 0)
+        directionVector = Vector3.new(launchPower, verticalLaunchHeight, 0)
     end
 
     local launchVelocity = Instance.new("BodyVelocity")
@@ -133,13 +148,10 @@ local function launchPlayer()
     launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
     launchVelocity.Parent = humanoidRootPart
 
-    -- Create a little backflip movement (rotate while launching)
-    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(0, math.rad(720), 0) -- Backflip
-
     game:GetService("Debris"):AddItem(launchVelocity, 1)
 
-    -- Launch height based on power (10 to 40 studs max)
-    humanoidRootPart.Velocity = Vector3.new(directionVector.X, launchPower / 10, directionVector.Z)
+    -- Adding Backflip
+    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(math.rad(180), 0, 0)
 end
 
 -- Unstun Function
@@ -184,15 +196,6 @@ local function reopenGUI()
     frame.Visible = true
     reopenButton.Visible = false
 end
-
--- Rainbow Color Change for Title Text
-local function changeTitleColor()
-    while true do
-        title.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1) -- Cycle through rainbow colors
-        wait(1)
-    end
-end
-coroutine.wrap(changeTitleColor)()
 
 -- Connect Buttons
 launchButton.MouseButton1Click:Connect(launchPlayer)
