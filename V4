@@ -148,23 +148,30 @@ local function launchPlayer()
     launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
     launchVelocity.Parent = humanoidRootPart
 
-    -- Apply front vertical spin using BodyAngularVelocity (higher power = faster spin)
+    -- Apply front vertical spin using CFrame manipulation
     local spinSpeed = launchPower * 0.2 -- Increase the multiplier for faster spin
-    local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
-    bodyAngularVelocity.AngularVelocity = Vector3.new(spinSpeed, 0, 0)
-    bodyAngularVelocity.MaxTorque = Vector3.new(4000, 4000, 4000)
-    bodyAngularVelocity.Parent = humanoidRootPart
+    local startCFrame = humanoidRootPart.CFrame
+    local spinStartTime = tick()
 
     -- Apply velocity and rotation
     game:GetService("Debris"):AddItem(launchVelocity, 1)
-    game:GetService("Debris"):AddItem(bodyAngularVelocity, 1)
+
+    -- Spin the player while they are being launched
+    coroutine.wrap(function()
+        while humanoidRootPart and tick() - spinStartTime < 1 do
+            local elapsed = tick() - spinStartTime
+            local angle = math.rad(spinSpeed * elapsed) -- Calculate the angle based on time and power
+            humanoidRootPart.CFrame = startCFrame * CFrame.Angles(0, angle, 0) -- Apply front vertical spin
+            wait(0.03)
+        end
+    end)()
 end
 
 -- Unstun Function (Stop Spinning)
 local function unstunPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-    -- Stop spinning by resetting angular velocity
-    humanoidRootPart:FindFirstChildOfClass("BodyAngularVelocity")?.Destroy()
+    -- Stop spinning by resetting CFrame (stop the rotation)
+    humanoidRootPart.CFrame = humanoidRootPart.CFrame -- Reset to current CFrame to stop spinning
 end
 
 -- Change Direction Function
