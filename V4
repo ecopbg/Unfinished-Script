@@ -1,4 +1,6 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
@@ -18,42 +20,161 @@ local launchDirections = { "Forward", "Backward", "Left", "Right" }
 local currentDirectionIndex = 1
 local guiPosition = UDim2.new(0.4, 0, 0.3, 0)
 
--- GUI Setup
+-- GUI Creation
 local screenGui = Instance.new("ScreenGui")
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 200)
+frame.Size = UDim2.new(0, 250, 0, 180)
 frame.Position = guiPosition
-frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black interior
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 frame.BorderSizePixel = 4
-frame.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Red border
+frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
 frame.Draggable = true
 frame.Active = true
 frame.Parent = screenGui
 
--- Title with Rainbow Effect
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundTransparency = 1
 title.Text = "fUNny lAunch gUI!1!!1"
 title.TextScaled = true
-title.TextStrokeTransparency = 0 -- Outline
-title.TextColor3 = Color3.new(1, 1, 1)
+title.TextStrokeTransparency = 0 -- Outline Effect
+title.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 title.Font = Enum.Font.Cartoon
 title.Parent = frame
 
-local function changeTitleColor()
+-- Function to Change Title Color (Rainbow Effect)
+spawn(function()
     while true do
         title.TextColor3 = Color3.fromHSV(math.random(), 1, 1)
         wait(5)
     end
-end
-spawn(changeTitleColor)
+end)
 
 -- Small Credit Text
 local creditText = Instance.new("TextLabel")
 creditText.Size = UDim2.new(1, 0, 0, 15)
 creditText.Position = UDim2.new(0, 0, 0, 30)
 creditText.BackgroundTransparency = 1
+creditText.Text = "made by @ecopbg on yt! <3"
+creditText.TextScaled = true
+creditText.TextColor3 = Color3.fromRGB(255, 255, 255)
+creditText.Font = Enum.Font.Cartoon
+creditText.Parent = frame
+
+-- Close Button
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 25, 0, 25)
+closeButton.Position = UDim2.new(0, -5, 0, -5)
+closeButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+closeButton.Text = "X"
+closeButton.TextScaled = true
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.Cartoon
+closeButton.Parent = frame
+
+-- Reopen Button
+local reopenButton = Instance.new("TextButton")
+reopenButton.Size = UDim2.new(0, 100, 0, 30)
+reopenButton.Position = UDim2.new(0, 10, 0, 10)
+reopenButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+reopenButton.Text = "Reopen"
+reopenButton.TextScaled = true
+reopenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+reopenButton.Font = Enum.Font.Cartoon
+reopenButton.Parent = screenGui
+reopenButton.Visible = false
+
+-- Button Creation Function
+local function createButton(text, posY)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0.9, 0, 0, 25)
+    button.Position = UDim2.new(0.05, 0, 0, posY)
+    button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Text = text
+    button.Font = Enum.Font.Cartoon
+    button.TextScaled = true
+    button.Parent = frame
+    return button
+end
+
+-- Create Buttons
+local launchButton = createButton("Launch", 50)
+local unstunButton = createButton("Unstun", 80)
+local directionButton = createButton("Direction: Forward", 110)
+local powerButton = createButton("Power: 100", 140)
+
+-- Launch Function
+local function launchPlayer()
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Paralyze player
+
+    -- Calculate height based on power (Min: 10, Max: 40)
+    local height = 10 + (launchPower / 500) * 30
+
+    local directionVector = Vector3.new(0, height, 0)
+    if launchDirections[currentDirectionIndex] == "Forward" then
+        directionVector = Vector3.new(0, height, -launchPower)
+    elseif launchDirections[currentDirectionIndex] == "Backward" then
+        directionVector = Vector3.new(0, height, launchPower)
+    elseif launchDirections[currentDirectionIndex] == "Left" then
+        directionVector = Vector3.new(-launchPower, height, 0)
+    elseif launchDirections[currentDirectionIndex] == "Right" then
+        directionVector = Vector3.new(launchPower, height, 0)
+    end
+
+    local launchVelocity = Instance.new("BodyVelocity")
+    launchVelocity.Velocity = directionVector
+    launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+    launchVelocity.Parent = humanoidRootPart
+
+    -- Backflip animation
+    humanoidRootPart.RotVelocity = Vector3.new(math.random(10, 20), 0, 0)
+
+    game:GetService("Debris"):AddItem(launchVelocity, 1)
+end
+
+-- Unstun Function
+local function unstunPlayer()
+    humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+end
+
+-- Change Direction Function
+local function changeDirection()
+    currentDirectionIndex = (currentDirectionIndex % #launchDirections) + 1
+    directionButton.Text = "Direction: " .. launchDirections[currentDirectionIndex]
+end
+
+-- Change Power Function
+local function changePower()
+    local newPower = tonumber(game:GetService("TextService"):FilterStringForBroadcast(
+        player, powerButton.Text))
+    if newPower and newPower >= 1 and newPower <= 500 then
+        launchPower = newPower
+    else
+        launchPower = 1
+    end
+    powerButton.Text = "Power: " .. launchPower
+end
+
+-- Close & Reopen Functions
+local function closeGUI()
+    guiPosition = frame.Position
+    frame.Visible = false
+    reopenButton.Visible = true
+end
+local function reopenGUI()
+    frame.Position = guiPosition
+    frame.Visible = true
+    reopenButton.Visible = false
+end
+
+-- Connect Buttons
+launchButton.MouseButton1Click:Connect(launchPlayer)
+unstunButton.MouseButton1Click:Connect(unstunPlayer)
+directionButton.MouseButton1Click:Connect(changeDirection)
+powerButton.MouseButton1Click:Connect(changePower)
+closeButton.MouseButton1Click:Connect(closeGUI)
+reopenButton.MouseButton1Click:Connect(reopenGUI)
