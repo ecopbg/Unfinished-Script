@@ -125,7 +125,7 @@ local function changeTitleColor()
 end
 coroutine.wrap(changeTitleColor)()
 
--- Launch Function with Backflip Spin
+-- Launch Function with Front Vertical Spin (Backflip)
 local function launchPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Paralyze player
 
@@ -148,23 +148,15 @@ local function launchPlayer()
     launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
     launchVelocity.Parent = humanoidRootPart
 
-    -- Add a BodyGyro to help with rotation (Backflip Spin)
-    local bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.CFrame = humanoidRootPart.CFrame
-    bodyGyro.MaxTorque = Vector3.new(4000, 4000, 4000) -- Allow rotation
-    bodyGyro.D = 20 -- Damping to make it smooth
-    bodyGyro.Parent = humanoidRootPart
-
-    -- Add BodyAngularVelocity to apply spin
-    local spinSpeed = launchPower * 0.5 -- Spin speed based on launch power
+    -- Apply the backflip (spinning) using BodyAngularVelocity (faster spin with more power)
+    local spinSpeed = launchPower * 0.2  -- Increase multiplier for faster spin
     local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
-    bodyAngularVelocity.AngularVelocity = Vector3.new(spinSpeed, 0, 0) -- Front flip spin
+    bodyAngularVelocity.AngularVelocity = Vector3.new(spinSpeed, 0, 0) -- Front vertical spin (X-axis)
     bodyAngularVelocity.MaxTorque = Vector3.new(4000, 4000, 4000)
     bodyAngularVelocity.Parent = humanoidRootPart
 
     -- Apply velocity and rotation
     game:GetService("Debris"):AddItem(launchVelocity, 1)
-    game:GetService("Debris"):AddItem(bodyGyro, 1)
     game:GetService("Debris"):AddItem(bodyAngularVelocity, 1)
 end
 
@@ -172,7 +164,10 @@ end
 local function unstunPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
     -- Stop spinning by resetting angular velocity
-    humanoidRootPart:FindFirstChildOfClass("BodyAngularVelocity")?.Destroy()
+    local angularVelocity = humanoidRootPart:FindFirstChildOfClass("BodyAngularVelocity")
+    if angularVelocity then
+        angularVelocity:Destroy()
+    end
 end
 
 -- Change Direction Function
