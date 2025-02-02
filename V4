@@ -30,7 +30,7 @@ frame.Size = UDim2.new(0, 250, 0, 180)
 frame.Position = guiPosition
 frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 frame.BorderSizePixel = 4
-frame.BorderColor3 = Color3.fromRGB(255, 0, 0)  -- Red border
+frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
 frame.Draggable = true
 frame.Active = true
 frame.Parent = screenGui
@@ -43,7 +43,7 @@ title.TextScaled = true
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.Cartoon
 title.TextStrokeTransparency = 0.5
-title.TextOutlineTransparency = 0.5
+title.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 title.Parent = frame
 
 -- Small Credit Text
@@ -60,7 +60,7 @@ creditText.Parent = frame
 -- Close Button
 local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0, 25, 0, 25)
-closeButton.Position = UDim2.new(0, 0, 0, 0) -- Position on top-left
+closeButton.Position = UDim2.new(0, 0, 0, 0)
 closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 closeButton.Text = "X"
 closeButton.TextScaled = true
@@ -72,7 +72,7 @@ closeButton.Parent = frame
 local reopenButton = Instance.new("TextButton")
 reopenButton.Size = UDim2.new(0, 100, 0, 30)
 reopenButton.Position = UDim2.new(0, 10, 0, 10)
-reopenButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+reopenButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 reopenButton.Text = "Reopen"
 reopenButton.TextScaled = true
 reopenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -91,7 +91,7 @@ local function createButton(text, posY)
     button.Font = Enum.Font.Cartoon
     button.TextScaled = true
     button.BorderSizePixel = 2
-    button.BorderColor3 = Color3.fromRGB(255, 0, 0)  -- Red border
+    button.BorderColor3 = Color3.fromRGB(255, 0, 0)
     button.Parent = frame
     return button
 end
@@ -114,12 +114,12 @@ powerInput.TextScaled = true
 powerInput.Visible = false
 powerInput.Parent = frame
 
--- Rainbow Color Function
+-- Rainbow Text Animation
 local function changeTitleColor()
     while true do
-        for i = 0, 255, 10 do
-            title.TextColor3 = Color3.fromHSV(i/255, 1, 1)
-            wait(0.05)
+        for i = 0, 360, 30 do
+            title.TextColor3 = Color3.fromHSV(i / 360, 1, 1)
+            wait(5)
         end
     end
 end
@@ -129,29 +129,29 @@ coroutine.wrap(changeTitleColor)()
 local function launchPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Paralyze player
 
-    -- Bounce Effect Calculation
-    local verticalLaunchHeight = math.clamp(launchPower / 12, 10, 40)  -- Calculate height between 10-40 studs
-    local directionVector = Vector3.new(0, verticalLaunchHeight, 0)
-
+    local directionVector = Vector3.new(0, 60, 0) -- Default (upwards)
     if launchDirections[currentDirectionIndex] == "Forward" then
-        directionVector = Vector3.new(0, verticalLaunchHeight, -launchPower)
+        directionVector = Vector3.new(0, 50, -launchPower)
     elseif launchDirections[currentDirectionIndex] == "Backward" then
-        directionVector = Vector3.new(0, verticalLaunchHeight, launchPower)
+        directionVector = Vector3.new(0, 50, launchPower)
     elseif launchDirections[currentDirectionIndex] == "Left" then
-        directionVector = Vector3.new(-launchPower, verticalLaunchHeight, 0)
+        directionVector = Vector3.new(-launchPower, 50, 0)
     elseif launchDirections[currentDirectionIndex] == "Right" then
-        directionVector = Vector3.new(launchPower, verticalLaunchHeight, 0)
+        directionVector = Vector3.new(launchPower, 50, 0)
     end
 
+    -- Adjust height based on power
+    local height = math.clamp(launchPower / 12, 10, 40)
+
     local launchVelocity = Instance.new("BodyVelocity")
-    launchVelocity.Velocity = directionVector
+    launchVelocity.Velocity = directionVector + Vector3.new(0, height, 0)
     launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
     launchVelocity.Parent = humanoidRootPart
 
-    game:GetService("Debris"):AddItem(launchVelocity, 1)
-
-    -- Adding Backflip
+    -- Backflip Movement
     humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(math.rad(180), 0, 0)
+
+    game:GetService("Debris"):AddItem(launchVelocity, 1)
 end
 
 -- Unstun Function
