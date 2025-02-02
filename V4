@@ -125,7 +125,7 @@ local function changeTitleColor()
 end
 coroutine.wrap(changeTitleColor)()
 
--- Launch Function
+-- Launch Function with Front Vertical Spin
 local function launchPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Paralyze player
 
@@ -148,18 +148,23 @@ local function launchPlayer()
     launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
     launchVelocity.Parent = humanoidRootPart
 
-    -- Apply front vertical spin (the higher the power, the faster the spin)
-    local spinSpeed = launchPower * 0.1
-    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(math.rad(spinSpeed), 0, 0)
+    -- Apply front vertical spin using BodyAngularVelocity (higher power = faster spin)
+    local spinSpeed = launchPower * 0.2 -- Increase the multiplier for faster spin
+    local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
+    bodyAngularVelocity.AngularVelocity = Vector3.new(spinSpeed, 0, 0)
+    bodyAngularVelocity.MaxTorque = Vector3.new(4000, 4000, 4000)
+    bodyAngularVelocity.Parent = humanoidRootPart
 
+    -- Apply velocity and rotation
     game:GetService("Debris"):AddItem(launchVelocity, 1)
+    game:GetService("Debris"):AddItem(bodyAngularVelocity, 1)
 end
 
 -- Unstun Function (Stop Spinning)
 local function unstunPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-    -- Reset rotation to stop spinning
-    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(0, 0, 0)
+    -- Stop spinning by resetting angular velocity
+    humanoidRootPart:FindFirstChildOfClass("BodyAngularVelocity")?.Destroy()
 end
 
 -- Change Direction Function
