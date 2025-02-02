@@ -1,0 +1,59 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
+-- GUI Persistence After Death
+local function onCharacterAdded(newCharacter)
+    character = newCharacter
+    humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoid = character:WaitForChild("Humanoid")
+end
+player.CharacterAdded:Connect(onCharacterAdded)
+
+-- Variables
+local launchPower = 100
+local launchDirections = { "Forward", "Backward", "Left", "Right" }
+local currentDirectionIndex = 1
+local guiPosition = UDim2.new(0.4, 0, 0.3, 0)
+
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 250, 0, 200)
+frame.Position = guiPosition
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black interior
+frame.BorderSizePixel = 4
+frame.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Red border
+frame.Draggable = true
+frame.Active = true
+frame.Parent = screenGui
+
+-- Title with Rainbow Effect
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundTransparency = 1
+title.Text = "fUNny lAunch gUI!1!!1"
+title.TextScaled = true
+title.TextStrokeTransparency = 0 -- Outline
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.Cartoon
+title.Parent = frame
+
+local function changeTitleColor()
+    while true do
+        title.TextColor3 = Color3.fromHSV(math.random(), 1, 1)
+        wait(5)
+    end
+end
+spawn(changeTitleColor)
+
+-- Small Credit Text
+local creditText = Instance.new("TextLabel")
+creditText.Size = UDim2.new(1, 0, 0, 15)
+creditText.Position = UDim2.new(0, 0, 0, 30)
+creditText.BackgroundTransparency = 1
