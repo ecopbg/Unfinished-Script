@@ -112,9 +112,35 @@ end
 local launchButton = createButton("Launch", 50)
 local unstunButton = createButton("Unstun", 80)
 local directionButton = createButton("Direction: Forward", 110)
-local powerButton = createButton("Power: 100", 140)
 
--- Launch Function
+-- Power Button
+local powerButton = Instance.new("TextButton")
+powerButton.Size = UDim2.new(0.9, 0, 0, 25)
+powerButton.Position = UDim2.new(0.05, 0, 0, 140)
+powerButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+powerButton.BorderSizePixel = 2
+powerButton.BorderColor3 = Color3.fromRGB(255, 0, 0)
+powerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+powerButton.Text = "Power: " .. launchPower
+powerButton.Font = Enum.Font.Cartoon
+powerButton.TextScaled = true
+powerButton.Parent = frame
+
+-- Power Input Box
+local powerInputBox = Instance.new("TextBox")
+powerInputBox.Size = UDim2.new(0.9, 0, 0, 25)
+powerInputBox.Position = UDim2.new(0.05, 0, 0, 140)
+powerInputBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+powerInputBox.BorderSizePixel = 2
+powerInputBox.BorderColor3 = Color3.fromRGB(255, 0, 0)
+powerInputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+powerInputBox.Text = ""
+powerInputBox.Font = Enum.Font.Cartoon
+powerInputBox.TextScaled = true
+powerInputBox.Visible = false
+powerInputBox.Parent = frame
+
+-- Launch Function with Backflip
 local function launchPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Paralyze player
     
@@ -144,6 +170,13 @@ local function launchPlayer()
 
     game:GetService("Debris"):AddItem(launchVelocity, 1)
     game:GetService("Debris"):AddItem(bodyGyro, 1)
+
+    -- Simulate Backflip with CFrame
+    local backflipTween = TweenService:Create(humanoidRootPart, TweenInfo.new(0.5), {CFrame = humanoidRootPart.CFrame * CFrame.Angles(math.rad(-90), 0, 0)})
+    backflipTween:Play()
+    backflipTween.Completed:Connect(function()
+        humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(math.rad(90), 0, 0) -- Reset rotation after backflip
+    end)
 end
 
 -- Unstun Function
@@ -156,6 +189,28 @@ local function changeDirection()
     currentDirectionIndex = (currentDirectionIndex % #launchDirections) + 1
     directionButton.Text = "Direction: " .. launchDirections[currentDirectionIndex]
 end
+
+-- Power Button Click Function
+powerButton.MouseButton1Click:Connect(function()
+    powerInputBox.Visible = true
+    powerInputBox.Focus()
+    powerButton.Visible = false
+end)
+
+-- Power Input Box Confirmation
+powerInputBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local powerInput = tonumber(powerInputBox.Text)
+        if powerInput then
+            launchPower = math.clamp(powerInput, 1, 500)
+            powerButton.Text = "Power: " .. launchPower
+        else
+            powerButton.Text = "Invalid Power"
+        end
+        powerInputBox.Visible = false
+        powerButton.Visible = true
+    end
+end)
 
 -- Close & Reopen Functions
 local function closeGUI()
