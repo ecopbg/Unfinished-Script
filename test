@@ -1,0 +1,100 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
+-- GUI Creation
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 250, 0, 150)
+frame.Position = UDim2.new(0.5, -125, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 2
+frame.Draggable = true
+frame.Active = true
+frame.Parent = screenGui
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+title.Text = "fUNny lAunch gUI!1!!1"
+title.TextScaled = true
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.Cartoon
+title.Parent = frame
+
+-- Button Creation Function
+local function createButton(text, posY)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, -10, 0, 30)
+    button.Position = UDim2.new(0, 5, 0, posY)
+    button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Text = text
+    button.Font = Enum.Font.Cartoon
+    button.TextScaled = true
+    button.Parent = frame
+    return button
+end
+
+-- Create Buttons
+local launchButton = createButton("Launch", 40)
+local unstunButton = createButton("Unstun", 75)
+local directionButton = createButton("Change Direction", 110)
+local powerButton = createButton("Change Power", 145)
+
+-- Launch Variables
+local launchPower = 100
+local launchDirection = 1 -- 1 = Forward, -1 = Backward
+
+-- Launch Function
+local function launchPlayer()
+    if humanoid.Sit then return end -- Prevent launching when already sitting
+
+    humanoid.Sit = true -- "Stuns" the player
+    local launchVelocity = Instance.new("BodyVelocity")
+    launchVelocity.Velocity = Vector3.new(0, 50, launchPower * launchDirection)
+    launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+    launchVelocity.Parent = humanoidRootPart
+
+    local angularVelocity = Instance.new("BodyAngularVelocity") -- Backflip effect
+    angularVelocity.AngularVelocity = Vector3.new(-15, 0, 0)
+    angularVelocity.MaxTorque = Vector3.new(4000, 4000, 4000)
+    angularVelocity.Parent = humanoidRootPart
+
+    game:GetService("Debris"):AddItem(launchVelocity, 1)
+    game:GetService("Debris"):AddItem(angularVelocity, 1)
+end
+
+-- Unstun Function
+local function unstunPlayer()
+    humanoid.Sit = false
+end
+
+-- Change Direction Function
+local function changeDirection()
+    launchDirection = -launchDirection
+    directionButton.Text = "Direction: " .. (launchDirection == 1 and "Forward" or "Backward")
+end
+
+-- Change Power Function
+local function changePower()
+    local input = tonumber(game:GetService("TextChatService"):PromptInput("Enter Power (1-500)"))
+    if input and input >= 1 and input <= 500 then
+        launchPower = input
+        powerButton.Text = "Power: " .. launchPower
+    else
+        powerButton.Text = "Invalid Power!"
+        wait(1)
+        powerButton.Text = "Change Power"
+    end
+end
+
+-- Connect Buttons
+launchButton.MouseButton1Click:Connect(launchPlayer)
+unstunButton.MouseButton1Click:Connect(unstunPlayer)
+directionButton.MouseButton1Click:Connect(changeDirection)
+powerButton.MouseButton1Click:Connect(changePower)
