@@ -1,0 +1,159 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Variables
+local launchPower = 100
+local launchDirection = 1 -- 1 = Forward, -1 = Backward
+local guiPosition = UDim2.new(0.5, -125, 0.3, 0)
+
+-- GUI Creation
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 220, 0, 140)
+frame.Position = guiPosition
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 2
+frame.Draggable = true
+frame.Active = true
+frame.Parent = screenGui
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 25)
+title.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+title.Text = "fUNny lAunch gUI!1!!1"
+title.TextScaled = true
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.Cartoon
+title.Parent = frame
+
+-- Close Button
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 25, 0, 25)
+closeButton.Position = UDim2.new(0, 0, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+closeButton.Text = "X"
+closeButton.TextScaled = true
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.Cartoon
+closeButton.Parent = frame
+
+-- Reopen Button
+local reopenButton = Instance.new("TextButton")
+reopenButton.Size = UDim2.new(0, 100, 0, 30)
+reopenButton.Position = UDim2.new(0, 10, 0, 10)
+reopenButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+reopenButton.Text = "Reopen"
+reopenButton.TextScaled = true
+reopenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+reopenButton.Font = Enum.Font.Cartoon
+reopenButton.Parent = screenGui
+reopenButton.Visible = false
+
+-- Button Creation Function
+local function createButton(text, posY)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0.9, 0, 0, 25)
+    button.Position = UDim2.new(0.05, 0, 0, posY)
+    button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Text = text
+    button.Font = Enum.Font.Cartoon
+    button.TextScaled = true
+    button.Parent = frame
+    return button
+end
+
+-- Create Buttons
+local launchButton = createButton("Launch", 30)
+local unstunButton = createButton("Unstun", 60)
+local directionButton = createButton("Direction: Forward", 90)
+local powerButton = createButton("Power: 100", 120)
+
+-- Power Input Box (Hidden Initially)
+local powerInput = Instance.new("TextBox")
+powerInput.Size = powerButton.Size
+powerInput.Position = powerButton.Position
+powerInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+powerInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+powerInput.Text = tostring(launchPower)
+powerInput.Font = Enum.Font.Cartoon
+powerInput.TextScaled = true
+powerInput.Visible = false
+powerInput.Parent = frame
+
+-- Launch Function
+local function launchPlayer()
+    if humanoid:GetState() == Enum.HumanoidStateType.Physics then return end -- Prevent double launching
+
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Paralyze the player instantly
+    local launchVelocity = Instance.new("BodyVelocity")
+    launchVelocity.Velocity = Vector3.new(0, 60, launchPower * launchDirection)
+    launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+    launchVelocity.Parent = humanoidRootPart
+
+    local angularVelocity = Instance.new("BodyAngularVelocity") -- Backflip effect
+    angularVelocity.AngularVelocity = Vector3.new(-15, 0, 0)
+    angularVelocity.MaxTorque = Vector3.new(4000, 4000, 4000)
+    angularVelocity.Parent = humanoidRootPart
+
+    game:GetService("Debris"):AddItem(launchVelocity, 1)
+    game:GetService("Debris"):AddItem(angularVelocity, 1)
+end
+
+-- Unstun Function
+local function unstunPlayer()
+    humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) -- Unparalyze the player
+end
+
+-- Change Direction Function
+local function changeDirection()
+    launchDirection = -launchDirection
+    directionButton.Text = "Direction: " .. (launchDirection == 1 and "Forward" or "Backward")
+end
+
+-- Change Power Function (Show Input)
+local function showPowerInput()
+    powerButton.Visible = false
+    powerInput.Visible = true
+    powerInput:CaptureFocus()
+end
+
+-- Power Input Change
+powerInput.FocusLost:Connect(function()
+    local input = tonumber(powerInput.Text)
+    if input and input >= 1 and input <= 500 then
+        launchPower = input
+    else
+        launchPower = 1
+    end
+    powerButton.Text = "Power: " .. launchPower
+    powerInput.Visible = false
+    powerButton.Visible = true
+end)
+
+-- Close GUI Function
+local function closeGUI()
+    guiPosition = frame.Position
+    frame.Visible = false
+    reopenButton.Visible = true
+end
+
+-- Reopen GUI Function
+local function reopenGUI()
+    frame.Position = guiPosition
+    frame.Visible = true
+    reopenButton.Visible = false
+end
+
+-- Connect Buttons
+launchButton.MouseButton1Click:Connect(launchPlayer)
+unstunButton.MouseButton1Click:Connect(unstunPlayer)
+directionButton.MouseButton1Click:Connect(changeDirection)
+powerButton.MouseButton1Click:Connect(showPowerInput)
+closeButton.MouseButton1Click:Connect(closeGUI)
+reopenButton.MouseButton1Click:Connect(reopenGUI)
