@@ -1,5 +1,5 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -17,19 +17,22 @@ player.CharacterAdded:Connect(onCharacterAdded)
 -- Variables
 local launchPower = 100
 local launchDirections = { "Forward", "Backward", "Left", "Right" }
-local currentDirectionIndex = 1
+local currentDirectionIndex = 1 -- Start with Forward
 local guiPosition = UDim2.new(0.4, 0, 0.3, 0)
+local rainbowColors = { Color3.fromRGB(255,0,0), Color3.fromRGB(255,165,0), Color3.fromRGB(255,255,0),
+                        Color3.fromRGB(0,255,0), Color3.fromRGB(0,0,255), Color3.fromRGB(75,0,130),
+                        Color3.fromRGB(148,0,211) }
 
 -- GUI Creation
 local screenGui = Instance.new("ScreenGui")
-screenGui.ResetOnSpawn = false
+screenGui.ResetOnSpawn = false -- Persist after death
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 250, 0, 180)
 frame.Position = guiPosition
 frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-frame.BorderSizePixel = 4
+frame.BorderSizePixel = 2
 frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
 frame.Draggable = true
 frame.Active = true
@@ -37,19 +40,21 @@ frame.Parent = screenGui
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
-title.BackgroundTransparency = 1
+title.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 title.Text = "fUNny lAunch gUI!1!!1"
 title.TextScaled = true
-title.TextStrokeTransparency = 0 -- Outline Effect
-title.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.Cartoon
+title.TextStrokeTransparency = 0 -- Text Outline
 title.Parent = frame
 
--- Function to Change Title Color (Rainbow Effect)
-spawn(function()
+-- Function to Cycle Rainbow Colors
+task.spawn(function()
     while true do
-        title.TextColor3 = Color3.fromHSV(math.random(), 1, 1)
-        wait(5)
+        for _, color in ipairs(rainbowColors) do
+            title.TextColor3 = color
+            task.wait(5)
+        end
     end
 end)
 
@@ -64,11 +69,11 @@ creditText.TextColor3 = Color3.fromRGB(255, 255, 255)
 creditText.Font = Enum.Font.Cartoon
 creditText.Parent = frame
 
--- Close Button
+-- Close Button (Top Left)
 local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 25, 0, 25)
-closeButton.Position = UDim2.new(0, -5, 0, -5)
-closeButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(0, -35, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 closeButton.Text = "X"
 closeButton.TextScaled = true
 closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -79,7 +84,7 @@ closeButton.Parent = frame
 local reopenButton = Instance.new("TextButton")
 reopenButton.Size = UDim2.new(0, 100, 0, 30)
 reopenButton.Position = UDim2.new(0, 10, 0, 10)
-reopenButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+reopenButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 reopenButton.Text = "Reopen"
 reopenButton.TextScaled = true
 reopenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -92,7 +97,9 @@ local function createButton(text, posY)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0.9, 0, 0, 25)
     button.Position = UDim2.new(0.05, 0, 0, posY)
-    button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    button.BorderSizePixel = 2
+    button.BorderColor3 = Color3.fromRGB(255, 0, 0)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Text = text
     button.Font = Enum.Font.Cartoon
@@ -110,19 +117,18 @@ local powerButton = createButton("Power: 100", 140)
 -- Launch Function
 local function launchPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Paralyze player
+    
+    local directionVector = Vector3.new(0, 60, 0) -- Default (upwards)
+    local verticalPower = 10 + (launchPower / 12.5) -- Converts 1-500 into 10-40 range
 
-    -- Calculate height based on power (Min: 10, Max: 40)
-    local height = 10 + (launchPower / 500) * 30
-
-    local directionVector = Vector3.new(0, height, 0)
     if launchDirections[currentDirectionIndex] == "Forward" then
-        directionVector = Vector3.new(0, height, -launchPower)
+        directionVector = Vector3.new(0, verticalPower, -launchPower)
     elseif launchDirections[currentDirectionIndex] == "Backward" then
-        directionVector = Vector3.new(0, height, launchPower)
+        directionVector = Vector3.new(0, verticalPower, launchPower)
     elseif launchDirections[currentDirectionIndex] == "Left" then
-        directionVector = Vector3.new(-launchPower, height, 0)
+        directionVector = Vector3.new(-launchPower, verticalPower, 0)
     elseif launchDirections[currentDirectionIndex] == "Right" then
-        directionVector = Vector3.new(launchPower, height, 0)
+        directionVector = Vector3.new(launchPower, verticalPower, 0)
     end
 
     local launchVelocity = Instance.new("BodyVelocity")
@@ -130,10 +136,14 @@ local function launchPlayer()
     launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
     launchVelocity.Parent = humanoidRootPart
 
-    -- Backflip animation
-    humanoidRootPart.RotVelocity = Vector3.new(math.random(10, 20), 0, 0)
+    -- Backflip Animation
+    local bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.CFrame = CFrame.Angles(math.rad(-360), 0, 0)
+    bodyGyro.MaxTorque = Vector3.new(4000, 4000, 4000)
+    bodyGyro.Parent = humanoidRootPart
 
     game:GetService("Debris"):AddItem(launchVelocity, 1)
+    game:GetService("Debris"):AddItem(bodyGyro, 1)
 end
 
 -- Unstun Function
@@ -145,18 +155,6 @@ end
 local function changeDirection()
     currentDirectionIndex = (currentDirectionIndex % #launchDirections) + 1
     directionButton.Text = "Direction: " .. launchDirections[currentDirectionIndex]
-end
-
--- Change Power Function
-local function changePower()
-    local newPower = tonumber(game:GetService("TextService"):FilterStringForBroadcast(
-        player, powerButton.Text))
-    if newPower and newPower >= 1 and newPower <= 500 then
-        launchPower = newPower
-    else
-        launchPower = 1
-    end
-    powerButton.Text = "Power: " .. launchPower
 end
 
 -- Close & Reopen Functions
@@ -175,6 +173,5 @@ end
 launchButton.MouseButton1Click:Connect(launchPlayer)
 unstunButton.MouseButton1Click:Connect(unstunPlayer)
 directionButton.MouseButton1Click:Connect(changeDirection)
-powerButton.MouseButton1Click:Connect(changePower)
 closeButton.MouseButton1Click:Connect(closeGUI)
 reopenButton.MouseButton1Click:Connect(reopenGUI)
