@@ -148,15 +148,18 @@ local function launchPlayer()
     launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
     launchVelocity.Parent = humanoidRootPart
 
-    -- Backflip Movement
-    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(math.rad(180), 0, 0)
+    -- Apply front vertical spin (the higher the power, the faster the spin)
+    local spinSpeed = launchPower * 0.1
+    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(math.rad(spinSpeed), 0, 0)
 
     game:GetService("Debris"):AddItem(launchVelocity, 1)
 end
 
--- Unstun Function
+-- Unstun Function (Stop Spinning)
 local function unstunPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+    -- Reset rotation to stop spinning
+    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(0, 0, 0)
 end
 
 -- Change Direction Function
