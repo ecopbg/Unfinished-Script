@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -26,22 +27,24 @@ screenGui.ResetOnSpawn = false -- Persist after death
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 180)
+frame.Size = UDim2.new(0, 300, 0, 200)
 frame.Position = guiPosition
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-frame.BorderSizePixel = 2
-frame.BorderColor3 = Color3.fromRGB(255, 0, 0) -- Red border
+frame.BorderSizePixel = 5
+frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
 frame.Draggable = true
 frame.Active = true
 frame.Parent = screenGui
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
-title.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+title.BackgroundTransparency = 1
 title.Text = "fUNny lAunch gUI!1!!1"
 title.TextScaled = true
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.Cartoon
+title.TextOutlineTransparency = 0.7
+title.TextStrokeTransparency = 0.2
 title.Parent = frame
 
 -- Small Credit Text
@@ -57,9 +60,9 @@ creditText.Parent = frame
 
 -- Close Button
 local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 25, 0, 25)
+closeButton.Size = UDim2.new(0, 30, 0, 30)
 closeButton.Position = UDim2.new(0, 0, 0, 0)
-closeButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 closeButton.Text = "X"
 closeButton.TextScaled = true
 closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -70,7 +73,7 @@ closeButton.Parent = frame
 local reopenButton = Instance.new("TextButton")
 reopenButton.Size = UDim2.new(0, 100, 0, 30)
 reopenButton.Position = UDim2.new(0, 10, 0, 10)
-reopenButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+reopenButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 reopenButton.Text = "Reopen"
 reopenButton.TextScaled = true
 reopenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -81,9 +84,9 @@ reopenButton.Visible = false
 -- Button Creation Function
 local function createButton(text, posY)
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0.9, 0, 0, 25)
+    button.Size = UDim2.new(0.9, 0, 0, 30)
     button.Position = UDim2.new(0.05, 0, 0, posY)
-    button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Text = text
     button.Font = Enum.Font.Cartoon
@@ -94,9 +97,9 @@ end
 
 -- Create Buttons
 local launchButton = createButton("Launch", 50)
-local unstunButton = createButton("Unstun", 80)
-local directionButton = createButton("Direction: Forward", 110)
-local powerButton = createButton("Power: 100", 140)
+local unstunButton = createButton("Unstun", 90)
+local directionButton = createButton("Direction: Forward", 130)
+local powerButton = createButton("Power: 100", 170)
 
 -- Power Input Box (Hidden Initially)
 local powerInput = Instance.new("TextBox")
@@ -110,20 +113,10 @@ powerInput.TextScaled = true
 powerInput.Visible = false
 powerInput.Parent = frame
 
--- Title Color Change (Rainbow)
-local function changeTitleColor()
-    while true do
-        title.TextColor3 = Color3.fromHSV(math.random(), 1, 1)
-        wait(5)
-    end
-end
-spawn(changeTitleColor)
-
 -- Launch Function
 local function launchPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Paralyze player
 
-    -- Launch Direction Vector
     local directionVector = Vector3.new(0, 60, 0) -- Default (upwards)
     if launchDirections[currentDirectionIndex] == "Forward" then
         directionVector = Vector3.new(0, 50, -launchPower)
@@ -135,18 +128,18 @@ local function launchPlayer()
         directionVector = Vector3.new(launchPower, 50, 0)
     end
 
-    -- Apply Instant Launch Force
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Velocity = directionVector
-    bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
-    bodyVelocity.Parent = humanoidRootPart
+    local launchVelocity = Instance.new("BodyVelocity")
+    launchVelocity.Velocity = directionVector
+    launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+    launchVelocity.Parent = humanoidRootPart
 
-    -- Backflip (Vertical Spin based on power)
-    local backflipSpinSpeed = launchPower / 5  -- Faster spin with more power
-    local backflipCFrame = humanoidRootPart.CFrame * CFrame.Angles(math.rad(backflipSpinSpeed), 0, 0)
-    humanoidRootPart.CFrame = backflipCFrame
+    -- Create a little backflip movement (rotate while launching)
+    humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.Angles(0, math.rad(720), 0) -- Backflip
 
-    game:GetService("Debris"):AddItem(bodyVelocity, 1)
+    game:GetService("Debris"):AddItem(launchVelocity, 1)
+
+    -- Launch height based on power (10 to 40 studs max)
+    humanoidRootPart.Velocity = Vector3.new(directionVector.X, launchPower / 10, directionVector.Z)
 end
 
 -- Unstun Function
@@ -191,6 +184,15 @@ local function reopenGUI()
     frame.Visible = true
     reopenButton.Visible = false
 end
+
+-- Rainbow Color Change for Title Text
+local function changeTitleColor()
+    while true do
+        title.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1) -- Cycle through rainbow colors
+        wait(1)
+    end
+end
+coroutine.wrap(changeTitleColor)()
 
 -- Connect Buttons
 launchButton.MouseButton1Click:Connect(launchPlayer)
