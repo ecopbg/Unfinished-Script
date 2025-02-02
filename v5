@@ -125,7 +125,7 @@ local function changeTitleColor()
 end
 coroutine.wrap(changeTitleColor)()
 
--- Launch Function with Backflip Spin (Instant Force and Velocity)
+-- Launch Function with Front Vertical Spin (Backflip)
 local function launchPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Paralyze player
 
@@ -143,16 +143,15 @@ local function launchPlayer()
     -- Adjust height based on power
     local height = math.clamp(launchPower / 12, 10, 40)
 
-    -- Apply launch velocity
     local launchVelocity = Instance.new("BodyVelocity")
     launchVelocity.Velocity = directionVector + Vector3.new(0, height, 0)
     launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
     launchVelocity.Parent = humanoidRootPart
 
-    -- Apply front vertical backflip spin using BodyAngularVelocity
-    local spinSpeed = launchPower * 0.2 -- Higher power = faster spin
+    -- Apply the backflip (spinning) using BodyAngularVelocity (faster spin with more power)
+    local spinSpeed = launchPower * 0.2  -- Increase multiplier for faster spin
     local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
-    bodyAngularVelocity.AngularVelocity = Vector3.new(-spinSpeed, 0, 0) -- Negative to simulate backflip
+    bodyAngularVelocity.AngularVelocity = Vector3.new(spinSpeed, 0, 0) -- Front vertical spin (X-axis)
     bodyAngularVelocity.MaxTorque = Vector3.new(4000, 4000, 4000)
     bodyAngularVelocity.Parent = humanoidRootPart
 
@@ -161,11 +160,14 @@ local function launchPlayer()
     game:GetService("Debris"):AddItem(bodyAngularVelocity, 1)
 end
 
--- Unstun Function (Stop Spin)
+-- Unstun Function (Stop Spinning)
 local function unstunPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
     -- Stop spinning by resetting angular velocity
-    humanoidRootPart:FindFirstChildOfClass("BodyAngularVelocity")?.Destroy()
+    local angularVelocity = humanoidRootPart:FindFirstChildOfClass("BodyAngularVelocity")
+    if angularVelocity then
+        angularVelocity:Destroy()
+    end
 end
 
 -- Change Direction Function
@@ -212,4 +214,4 @@ unstunButton.MouseButton1Click:Connect(unstunPlayer)
 directionButton.MouseButton1Click:Connect(changeDirection)
 powerButton.MouseButton1Click:Connect(showPowerInput)
 closeButton.MouseButton1Click:Connect(closeGUI)
-      reopenButton.MouseButton1Click:Connect(reopenGUI)
+reopenButton.MouseButton1Click:Connect(reopenGUI)
