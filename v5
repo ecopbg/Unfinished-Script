@@ -57,7 +57,7 @@ creditText.TextColor3 = Color3.fromRGB(255, 255, 255)
 creditText.Font = Enum.Font.Cartoon
 creditText.Parent = frame
 
--- Close Button
+-- Close Button (positioned on top left of the GUI)
 local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0, 25, 0, 25)
 closeButton.Position = UDim2.new(0, 0, 0, 0)
@@ -80,7 +80,7 @@ reopenButton.Font = Enum.Font.Cartoon
 reopenButton.Parent = screenGui
 reopenButton.Visible = false
 
--- Button Creation Function
+-- Button Creation Function (buttons use red border and black background)
 local function createButton(text, posY)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0.9, 0, 0, 25)
@@ -114,7 +114,7 @@ powerInput.TextScaled = true
 powerInput.Visible = false
 powerInput.Parent = frame
 
--- Rainbow Text Animation
+-- Rainbow Text Animation for the title
 local function changeTitleColor()
     while true do
         for i = 0, 360, 30 do
@@ -125,65 +125,91 @@ local function changeTitleColor()
 end
 coroutine.wrap(changeTitleColor)()
 
--- Launch Function with Front Vertical Spin (Backflip)
+--------------------------------------------------
+-- UPDATED LAUNCH FUNCTION (force impulse only)
+--------------------------------------------------
 local function launchPlayer()
-    humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Paralyze player
-
-    local directionVector = Vector3.new(0, 60, 0) -- Default (upwards)
+    -- Paralyze the player
+    humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+    
+    -- Determine horizontal directional force (only applied once)
+    -- Multiply launchPower by 1.2 for increased horizontal force.
+    local baseForce = launchPower * 1.2
+    local directionVector = Vector3.new(0, 0, 0)
     if launchDirections[currentDirectionIndex] == "Forward" then
-        directionVector = Vector3.new(0, 50, -launchPower)
+        directionVector = Vector3.new(0, 0, -baseForce)
     elseif launchDirections[currentDirectionIndex] == "Backward" then
-        directionVector = Vector3.new(0, 50, launchPower)
+        directionVector = Vector3.new(0, 0, baseForce)
     elseif launchDirections[currentDirectionIndex] == "Left" then
-        directionVector = Vector3.new(-launchPower, 50, 0)
+        directionVector = Vector3.new(-baseForce, 0, 0)
     elseif launchDirections[currentDirectionIndex] == "Right" then
-        directionVector = Vector3.new(launchPower, 50, 0)
+        directionVector = Vector3.new(baseForce, 0, 0)
     end
 
-    -- Adjust height based on power
-    local height = math.clamp(launchPower / 12, 10, 40)
+    -- Calculate upward impulse based on power:
+    -- At power=1, upwardForce = 10; at power=500, upwardForce = 350
+    local upwardForce = 10 + ((launchPower - 1) / 499) * 340
+    
+    -- Create a transient BodyVelocity to apply a one-time impulse.
+    local impulse = Instance.new("BodyVelocity")
+    impulse.Velocity = directionVector + Vector3.new(0, upwardForce, 0)
+    impulse.MaxForce = Vector3.new(15000, 15000, 15000)
+    impulse.Parent = humanoidRootPart
 
-    local launchVelocity = Instance.new("BodyVelocity")
-    launchVelocity.Velocity = directionVector + Vector3.new(0, height, 0)
-    launchVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
-    launchVelocity.Parent = humanoidRootPart
+    -- Remove the impulse after a brief moment so gravity resumes control.
+    delay(0.15, function()
+        if impulse and impulse.Parent then
+            impulse:Destroy()
+        end
+    end)
 
-    -- Apply the backflip (spinning) using BodyAngularVelocity (faster spin with more power)
-    local spinSpeed = launchPower * 0.2  -- Increase multiplier for faster spin
-    local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
-    bodyAngularVelocity.AngularVelocity = Vector3.new(spinSpeed, 0, 0) -- Front vertical spin (X-axis)
-    bodyAngularVelocity.MaxTorque = Vector3.new(4000, 4000, 4000)
-    bodyAngularVelocity.Parent = humanoidRootPart
+    -- Now apply a single backflip spin.
+    -- Compute a duration for one full spin (360°) based on power.
+    -- Let duration vary linearly from 2 sec (low power) to 0.3 sec (high power).
+    local duration = 2 - ((launchPower - 1) / 499) * (2 - 0.3)
+    local requiredAngularVelocity = (2 * math.pi) / duration  -- radians per second for one full rotation
 
-    -- Apply velocity and rotation
-    game:GetService("Debris"):AddItem(launchVelocity, 1)
-    game:GetService("Debris"):AddItem(bodyAngularVelocity, 1)
+    local spin = Instance.new("BodyAngularVelocity")
+    spin.AngularVelocity = Vector3.new(requiredAngularVelocity, 0, 0)  -- spin about X-axis (backflip)
+    spin.MaxTorque = Vector3.new(10000, 10000, 10000)
+    spin.Parent = humanoidRootPart
+
+    -- Remove the spin after the computed duration so it only spins once.
+    delay(duration, function()
+        if spin and spin.Parent then
+            spin:Destroy()
+        end
+    end)
 end
 
--- Unstun Function (Stop Spinning)
+--------------------------------------------------
+-- Unstun Function (Stops any residual spin)
+--------------------------------------------------
 local function unstunPlayer()
     humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-    -- Stop spinning by resetting angular velocity
     local angularVelocity = humanoidRootPart:FindFirstChildOfClass("BodyAngularVelocity")
     if angularVelocity then
         angularVelocity:Destroy()
     end
 end
 
+--------------------------------------------------
 -- Change Direction Function
+--------------------------------------------------
 local function changeDirection()
     currentDirectionIndex = (currentDirectionIndex % #launchDirections) + 1
     directionButton.Text = "Direction: " .. launchDirections[currentDirectionIndex]
 end
 
+--------------------------------------------------
 -- Change Power Function (Show Input)
+--------------------------------------------------
 local function showPowerInput()
     powerButton.Visible = false
     powerInput.Visible = true
     powerInput:CaptureFocus()
 end
 
--- Power Input Change
 powerInput.FocusLost:Connect(function()
     local input = tonumber(powerInput.Text)
     if input and input >= 1 and input <= 500 then
@@ -196,19 +222,24 @@ powerInput.FocusLost:Connect(function()
     powerButton.Visible = true
 end)
 
--- Close & Reopen Functions
+--------------------------------------------------
+-- Close & Reopen GUI Functions
+--------------------------------------------------
 local function closeGUI()
     guiPosition = frame.Position
     frame.Visible = false
     reopenButton.Visible = true
 end
+
 local function reopenGUI()
     frame.Position = guiPosition
     frame.Visible = true
     reopenButton.Visible = false
 end
 
--- Connect Buttons
+--------------------------------------------------
+-- Connect Button Events
+--------------------------------------------------
 launchButton.MouseButton1Click:Connect(launchPlayer)
 unstunButton.MouseButton1Click:Connect(unstunPlayer)
 directionButton.MouseButton1Click:Connect(changeDirection)
